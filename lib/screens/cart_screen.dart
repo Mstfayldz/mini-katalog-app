@@ -1,12 +1,77 @@
 import 'package:flutter/material.dart';
 import '../models/product.dart';
 
-class CartScreen extends StatelessWidget {
+class CartScreen extends StatefulWidget {
   final List<Product> cartItems;
+  final Function(Product) onRemove;
+  final VoidCallback onClearCart;
 
-  const CartScreen({super.key, required this.cartItems});
+  const CartScreen({
+    super.key,
+    required this.cartItems,
+    required this.onRemove,
+    required this.onClearCart,
+  });
 
-  double get _total => cartItems.fold(0, (sum, item) => sum + item.price);
+  @override
+  State<CartScreen> createState() => _CartScreenState();
+}
+
+class _CartScreenState extends State<CartScreen> {
+  late List<Product> _localItems;
+
+  @override
+  void initState() {
+    super.initState();
+    _localItems = List.from(widget.cartItems);
+  }
+
+  double get _total => _localItems.fold(0, (sum, item) => sum + item.price);
+
+  void _removeItem(Product product) {
+    setState(() => _localItems.remove(product));
+    widget.onRemove(product);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('${product.name} sepetten çıkarıldı'),
+        duration: const Duration(seconds: 1),
+        backgroundColor: Colors.red[700],
+      ),
+    );
+  }
+
+  void _checkout() {
+    setState(() => _localItems.clear());
+    widget.onClearCart();
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Row(
+          children: [
+            Icon(Icons.check_circle, color: Colors.green, size: 28),
+            SizedBox(width: 8),
+            Text('Sipariş Tamamlandı!'),
+          ],
+        ),
+        content: const Text(
+          'Ödemeniz başarıyla alındı. Siparişiniz en kısa sürede kargoya verilecektir.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.pop(context);
+            },
+            child: const Text(
+              'Tamam',
+              style: TextStyle(color: Color(0xFF2D2D6B)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,26 +91,29 @@ class CartScreen extends StatelessWidget {
               ),
             ),
             Text(
-              '${cartItems.length} items',
+              '${_localItems.length} items',
               style: const TextStyle(color: Colors.white70, fontSize: 12),
             ),
           ],
         ),
       ),
-      body: cartItems.isEmpty
+      body: _localItems.isEmpty
           ? const _EmptyCart()
           : Column(
               children: [
                 Expanded(
                   child: ListView.builder(
                     padding: const EdgeInsets.all(12),
-                    itemCount: cartItems.length,
+                    itemCount: _localItems.length,
                     itemBuilder: (context, index) {
-                      return _CartItem(product: cartItems[index]);
+                      return _CartItem(
+                        product: _localItems[index],
+                        onRemove: () => _removeItem(_localItems[index]),
+                      );
                     },
                   ),
                 ),
-                _CartSummary(total: _total),
+                _CartSummary(total: _total, onCheckout: _checkout),
               ],
             ),
     );
@@ -80,8 +148,9 @@ class _EmptyCart extends StatelessWidget {
 
 class _CartItem extends StatelessWidget {
   final Product product;
+  final VoidCallback onRemove;
 
-  const _CartItem({required this.product});
+  const _CartItem({required this.product, required this.onRemove});
 
   @override
   Widget build(BuildContext context) {
@@ -103,6 +172,11 @@ class _CartItem extends StatelessWidget {
           _CartItemImage(imageUrl: product.imageUrl),
           const SizedBox(width: 12),
           _CartItemInfo(product: product),
+          IconButton(
+            onPressed: onRemove,
+            icon: const Icon(Icons.delete_outline, color: Colors.red),
+            tooltip: 'Sepetten çıkar',
+          ),
         ],
       ),
     );
@@ -123,6 +197,20 @@ class _CartItemImage extends StatelessWidget {
         width: 80,
         height: 80,
         fit: BoxFit.cover,
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return Container(
+            width: 80,
+            height: 80,
+            color: Colors.grey[100],
+            child: const Center(
+              child: CircularProgressIndicator(
+                color: Color(0xFF2D2D6B),
+                strokeWidth: 2,
+              ),
+            ),
+          );
+        },
         errorBuilder: (_, __, ___) => Container(
           width: 80,
           height: 80,
@@ -150,13 +238,26 @@ class _CartItemInfo extends StatelessWidget {
             Text(
               product.name,
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
             const SizedBox(height: 4),
             Text(
               product.brand,
               style: TextStyle(fontSize: 12, color: Colors.grey[600]),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                const Icon(Icons.star, size: 12, color: Colors.amber),
+                const SizedBox(width: 2),
+                Text(
+                  product.rating.toStringAsFixed(1),
+                  style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
             Text(
               '\$${product.price.toStringAsFixed(2)}',
               style: const TextStyle(
@@ -174,8 +275,9 @@ class _CartItemInfo extends StatelessWidget {
 
 class _CartSummary extends StatelessWidget {
   final double total;
+  final VoidCallback onCheckout;
 
-  const _CartSummary({required this.total});
+  const _CartSummary({required this.total, required this.onCheckout});
 
   @override
   Widget build(BuildContext context) {
@@ -209,13 +311,7 @@ class _CartSummary extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Ödeme simülasyonu tamamlandı!'),
-                  ),
-                );
-              },
+              onPressed: onCheckout,
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF2D2D6B),
                 padding: const EdgeInsets.symmetric(vertical: 14),

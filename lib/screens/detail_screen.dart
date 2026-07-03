@@ -54,7 +54,17 @@ class _DetailImage extends StatelessWidget {
       imageUrl,
       width: double.infinity,
       height: 250,
-      fit: BoxFit.cover,
+      fit: BoxFit.contain,
+      loadingBuilder: (context, child, loadingProgress) {
+        if (loadingProgress == null) return child;
+        return Container(
+          height: 250,
+          color: Colors.grey[100],
+          child: const Center(
+            child: CircularProgressIndicator(color: Color(0xFF2D2D6B)),
+          ),
+        );
+      },
       errorBuilder: (_, __, ___) => Container(
         height: 250,
         color: Colors.grey[200],
@@ -92,6 +102,24 @@ class _DetailBody extends StatelessWidget {
           Text(
             product.brand,
             style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              const Icon(Icons.star, color: Colors.amber, size: 18),
+              const SizedBox(width: 4),
+              Text(
+                '${product.rating.toStringAsFixed(1)} / 5.0',
+                style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+              ),
+              const SizedBox(width: 12),
+              Icon(Icons.inventory_2, color: Colors.grey[600], size: 16),
+              const SizedBox(width: 4),
+              Text(
+                'Stok: ${product.stock}',
+                style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+              ),
+            ],
           ),
           const SizedBox(height: 8),
           Text(
@@ -138,11 +166,23 @@ class _SpecsRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        _SpecCard(label: 'Size', value: product.size),
+        _SpecCard(
+          label: 'Category',
+          value: product.category,
+          icon: Icons.category,
+        ),
         const SizedBox(width: 8),
-        _SpecCard(label: 'Audio', value: product.audio),
+        _SpecCard(
+          label: 'Rating',
+          value: product.rating.toStringAsFixed(1),
+          icon: Icons.star,
+        ),
         const SizedBox(width: 8),
-        _SpecCard(label: 'Colors', value: product.colors),
+        _SpecCard(
+          label: 'Stock',
+          value: '${product.stock}',
+          icon: Icons.inventory_2,
+        ),
       ],
     );
   }
@@ -151,8 +191,13 @@ class _SpecsRow extends StatelessWidget {
 class _SpecCard extends StatelessWidget {
   final String label;
   final String value;
+  final IconData icon;
 
-  const _SpecCard({required this.label, required this.value});
+  const _SpecCard({
+    required this.label,
+    required this.value,
+    required this.icon,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -172,18 +217,23 @@ class _SpecCard extends StatelessWidget {
         ),
         child: Column(
           children: [
+            Icon(icon, color: const Color(0xFF2D2D6B), size: 20),
+            const SizedBox(height: 4),
             Text(
               value,
               style: const TextStyle(
                 fontWeight: FontWeight.bold,
-                fontSize: 14,
+                fontSize: 12,
                 color: Color(0xFF2D2D6B),
               ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 2),
             Text(
               label,
-              style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+              style: TextStyle(fontSize: 10, color: Colors.grey[600]),
             ),
           ],
         ),

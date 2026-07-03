@@ -14,7 +14,8 @@ class ProductCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return InkWell(
+      borderRadius: BorderRadius.circular(12),
       onTap: () {
         Navigator.push(
           context,
@@ -62,7 +63,17 @@ class _ProductImage extends StatelessWidget {
         imageUrl,
         height: 120,
         width: double.infinity,
-        fit: BoxFit.cover,
+        fit: BoxFit.contain,
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return Container(
+            height: 120,
+            color: Colors.grey[100],
+            child: const Center(
+              child: CircularProgressIndicator(color: Color(0xFF2D2D6B)),
+            ),
+          );
+        },
         errorBuilder: (_, __, ___) => Container(
           height: 120,
           color: Colors.grey[200],
@@ -95,6 +106,17 @@ class _ProductInfo extends StatelessWidget {
           Text(
             product.brand,
             style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+          ),
+          const SizedBox(height: 4),
+          Row(
+            children: [
+              const Icon(Icons.star, size: 12, color: Colors.amber),
+              const SizedBox(width: 2),
+              Text(
+                product.rating.toStringAsFixed(1),
+                style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+              ),
+            ],
           ),
           const SizedBox(height: 4),
           Text(

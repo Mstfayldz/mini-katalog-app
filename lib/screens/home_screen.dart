@@ -14,12 +14,57 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final List<Product> _cartItems = [];
   final TextEditingController _searchController = TextEditingController();
-  List<Product> _filteredProducts = productList;
+  List<Product> _products = [];
+  bool _isLoading = true;
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProducts();
+  }
+
+  Future<void> _loadProducts() async {
+    try {
+      setState(() {
+        _isLoading = true;
+        _errorMessage = null;
+      });
+      final products = await ProductService.fetchProducts();
+      setState(() {
+        _products = products;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Ürünler yüklenemedi. Lütfen tekrar deneyin.';
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _onSearchChanged(String query) async {
+    if (query.isEmpty) {
+      _loadProducts();
+      return;
+    }
+    try {
+      setState(() => _isLoading = true);
+      final products = await ProductService.searchProducts(query);
+      setState(() {
+        _products = products;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Arama başarısız.';
+        _isLoading = false;
+      });
+    }
+  }
 
   void _addToCart(Product product) {
-    setState(() {
-      _cartItems.add(product);
-    });
+    setState(() => _cartItems.add(product));
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('${product.name} sepete eklendi!'),
@@ -29,16 +74,12 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _onSearchChanged(String query) {
-    setState(() {
-      _filteredProducts = productList
-          .where(
-            (p) =>
-                p.name.toLowerCase().contains(query.toLowerCase()) ||
-                p.brand.toLowerCase().contains(query.toLowerCase()),
-          )
-          .toList();
-    });
+  void _removeFromCart(Product product) {
+    setState(() => _cartItems.remove(product));
+  }
+
+  void _clearCart() {
+    setState(() => _cartItems.clear());
   }
 
   @override
@@ -57,7 +98,11 @@ class _HomeScreenState extends State<HomeScreen> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (_) => CartScreen(cartItems: _cartItems),
+              builder: (_) => CartScreen(
+                cartItems: _cartItems,
+                onRemove: _removeFromCart,
+                onClearCart: _clearCart,
+              ),
             ),
           );
         },
@@ -70,15 +115,36 @@ class _HomeScreenState extends State<HomeScreen> {
             onChanged: _onSearchChanged,
           ),
           const _SectionTitle(title: 'Ürünler'),
-          Expanded(
-            child: _ProductGrid(
-              products: _filteredProducts,
-              onAddToCart: _addToCart,
-            ),
-          ),
+          Expanded(child: _buildBody()),
         ],
       ),
     );
+  }
+
+  Widget _buildBody() {
+    if (_isLoading) {
+      return const Center(
+        child: CircularProgressIndicator(color: Color(0xFF2D2D6B)),
+      );
+    }
+    if (_errorMessage != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, size: 60, color: Colors.red),
+            const SizedBox(height: 16),
+            Text(_errorMessage!),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: _loadProducts,
+              child: const Text('Tekrar Dene'),
+            ),
+          ],
+        ),
+      );
+    }
+    return _ProductGrid(products: _products, onAddToCart: _addToCart);
   }
 }
 
@@ -238,7 +304,7 @@ class _ProductGrid extends StatelessWidget {
         crossAxisCount: 2,
         crossAxisSpacing: 10,
         mainAxisSpacing: 10,
-        childAspectRatio: 0.72,
+        childAspectRatio: 0.68,
       ),
       itemCount: products.length,
       itemBuilder: (context, index) {
