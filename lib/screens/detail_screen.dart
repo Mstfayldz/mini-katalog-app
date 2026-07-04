@@ -65,7 +65,7 @@ class _DetailImage extends StatelessWidget {
           ),
         );
       },
-      errorBuilder: (_, __, ___) => Container(
+      errorBuilder: (context, error, e) => Container(
         height: 250,
         color: Colors.grey[200],
         child: const Icon(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../data/products.dart';
+import '../services/api_service.dart';
+import '../services/local_storage_service.dart';
 import '../models/product.dart';
 import '../widgets/product_card.dart';
 import 'cart_screen.dart';
@@ -22,6 +23,12 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _loadProducts();
+    _loadCartFromStorage();
+  }
+
+  Future<void> _loadCartFromStorage() async {
+    final saved = await LocalStorageService.loadCart();
+    setState(() => _cartItems.addAll(saved));
   }
 
   Future<void> _loadProducts() async {
@@ -30,7 +37,7 @@ class _HomeScreenState extends State<HomeScreen> {
         _isLoading = true;
         _errorMessage = null;
       });
-      final products = await ProductService.fetchProducts();
+      final products = await ApiService.fetchProducts();
       setState(() {
         _products = products;
         _isLoading = false;
@@ -50,7 +57,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
     try {
       setState(() => _isLoading = true);
-      final products = await ProductService.searchProducts(query);
+      final products = await ApiService.searchProducts(query);
       setState(() {
         _products = products;
         _isLoading = false;
@@ -63,8 +70,10 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  void _addToCart(Product product) {
+  Future<void> _addToCart(Product product) async {
     setState(() => _cartItems.add(product));
+    await LocalStorageService.saveCart(_cartItems);
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('${product.name} sepete eklendi!'),
@@ -74,12 +83,14 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _removeFromCart(Product product) {
+  Future<void> _removeFromCart(Product product) async {
     setState(() => _cartItems.remove(product));
+    await LocalStorageService.saveCart(_cartItems);
   }
 
-  void _clearCart() {
+  Future<void> _clearCart() async {
     setState(() => _cartItems.clear());
+    await LocalStorageService.clearCart();
   }
 
   @override

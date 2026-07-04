@@ -3,8 +3,8 @@ import '../models/product.dart';
 
 class CartScreen extends StatefulWidget {
   final List<Product> cartItems;
-  final Function(Product) onRemove;
-  final VoidCallback onClearCart;
+  final Future<void> Function(Product) onRemove;
+  final Future<void> Function() onClearCart;
 
   const CartScreen({
     super.key,
@@ -28,9 +28,10 @@ class _CartScreenState extends State<CartScreen> {
 
   double get _total => _localItems.fold(0, (sum, item) => sum + item.price);
 
-  void _removeItem(Product product) {
+  Future<void> _removeItem(Product product) async {
     setState(() => _localItems.remove(product));
-    widget.onRemove(product);
+    await widget.onRemove(product);
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('${product.name} sepetten çıkarıldı'),
@@ -40,9 +41,10 @@ class _CartScreenState extends State<CartScreen> {
     );
   }
 
-  void _checkout() {
+  Future<void> _checkout() async {
     setState(() => _localItems.clear());
-    widget.onClearCart();
+    await widget.onClearCart();
+    if (!mounted) return;
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
@@ -211,7 +213,7 @@ class _CartItemImage extends StatelessWidget {
             ),
           );
         },
-        errorBuilder: (_, __, ___) => Container(
+        errorBuilder: (context, error, e) => Container(
           width: 80,
           height: 80,
           color: Colors.grey[200],
@@ -275,7 +277,7 @@ class _CartItemInfo extends StatelessWidget {
 
 class _CartSummary extends StatelessWidget {
   final double total;
-  final VoidCallback onCheckout;
+  final Future<void> Function() onCheckout;
 
   const _CartSummary({required this.total, required this.onCheckout});
 

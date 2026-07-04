@@ -74,7 +74,7 @@ class _ProductImage extends StatelessWidget {
             ),
           );
         },
-        errorBuilder: (_, __, ___) => Container(
+        errorBuilder: (context, error, e) => Container(
           height: 120,
           color: Colors.grey[200],
           child: const Icon(Icons.image_not_supported, color: Colors.grey),
