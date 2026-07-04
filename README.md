@@ -68,7 +68,7 @@ flutter run
 
 ## Gereksinimler
 
-- Flutter SDK >= 3.0.0
+- Flutter SDK >= 3.44.4
 - Android SDK (emulator veya fiziksel cihaz)
 - Internet bağlantısı (API verileri için)
 
