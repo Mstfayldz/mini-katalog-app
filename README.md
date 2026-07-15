@@ -80,3 +80,59 @@ Bu proje DummyJSON (https://dummyjson.com) API'sini kullanmaktadır. Gerçek bir
 
 Mustafa AYYILDIZ - Yazılım Geliştirme Egitimi
 Software Persona
+
+## Detayli Kurulum Rehberi
+
+### 1. Flutter SDK Kurulumu
+
+1. https://flutter.dev/docs/get-started/install adresine git
+2. Windows icin Flutter SDK'yi indir
+3. Indirilen zip dosyasini `C:\src\flutter` klasorune cikart
+4. Ortam degiskenlerine `C:\src\flutter\bin` yolunu ekle
+5. Terminalde `flutter doctor` yazarak kurulumu dogrula
+
+### 2. Android Studio Kurulumu
+
+1. https://developer.android.com/studio adresinden indir ve kur
+2. Android Studio'yu ac, SDK Manager'dan Android SDK'yi yukle
+3. Lisanslari kabul et: terminalde `flutter doctor --android-licenses` calistir
+4. Virtual Device Manager'dan yeni bir emulator olustur (Pixel 9, API 36 onerilir)
+
+### 3. Visual Studio Code Kurulumu
+
+1. https://code.visualstudio.com adresinden indir ve kur
+2. Eklentiler sekmesinden Flutter ve Dart eklentilerini yukle
+
+### 4. Projeyi Calistirma
+
+1. Repoyu klonla:
+
+```bash
+git clone https://github.com/KULLANICI_ADIN/mini-katalog-app.git
+```
+
+2. Proje klasorune gir:
+
+```bash
+cd mini-katalog-app
+```
+
+3. Bagimlilikları yukle:
+
+```bash
+flutter pub get
+```
+
+4. Emulatorü baslat (Android Studio > Device Manager > Play butonu)
+
+5. Uygulamayi calistir:
+
+```bash
+flutter run
+```
+
+### Notlar
+
+- Internet baglantisi zorunludur (DummyJSON API icin)
+- Emulator yerine fiziksel Android telefon da kullanilabilir (USB hata ayiklama acik olmali)
+- Minimum Flutter surumu 3.0.0 olmalidir
